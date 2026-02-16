@@ -1,0 +1,44 @@
+"""Run image analysis from the command line.
+
+Usage:
+    uv run python -m src.image https://example.com/img.jpg
+    uv run python -m src.image /path/to/local.jpg /path/to/other.png
+    uv run python -m src.image image1.jpg image2.png --no-gemini
+"""
+
+import json
+import sys
+
+from dotenv import load_dotenv
+
+from .handler import ImageAnalysisHandler
+
+load_dotenv(".env.local")
+
+
+def main() -> int:
+    args = [a for a in sys.argv[1:] if not a.startswith("--")]
+    flags = {a for a in sys.argv[1:] if a.startswith("--")}
+
+    if not args:
+        print("Usage: uv run python -m src.image <image_url> [image_url ...] [--no-gemini] [--no-ai]")
+        return 1
+
+    handler = ImageAnalysisHandler(config={
+        "enable_gemini": "--no-gemini" not in flags,
+        "enable_ai_detection": "--no-ai" not in flags,
+    })
+    handler.initialize()
+
+    payload = {"image_urls": args}
+    handler.validate_input(payload)
+    preprocessed = handler.preprocess(payload)
+    result = handler.process(preprocessed)
+    output = handler.postprocess(result)
+
+    print(json.dumps(output, indent=2, default=str))
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

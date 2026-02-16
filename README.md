@@ -82,6 +82,22 @@ uv sync --all-extras
 echo "GEMINI_API_KEY=your-key-here" > .env.local
 ```
 
+## Run
+
+```bash
+# Single image
+uv run python -m src.image https://example.com/shoe.jpg
+
+# Multiple images
+uv run python -m src.image image1.jpg image2.png https://cdn.example.com/photo.jpg
+
+# AI detection only (no Gemini)
+uv run python -m src.image photo.jpg --no-gemini
+
+# Gemini only (no AI detection)
+uv run python -m src.image photo.jpg --no-ai
+```
+
 ## Run tests
 
 ```bash

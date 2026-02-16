@@ -1,36 +1,54 @@
-# Staff Engineering Audit - ai-image-analysis-main
+# AI Image Analysis
 
-**Audit Date:** 2026-02-16
-**Version Audited:** v1.0.46
-**Auditor:** Staff Engineering Review
+Image fraud detection for warranty claims. Detects AI-generated images and analyzes content using Gemini.
 
-## Artifacts Index
+## What it does
 
-### Audit
-- [Code Review Findings](audit/code-review-findings.md) - Code smells, bugs, maintainability issues
-- [Security Audit](audit/security-audit.md) - Security findings and remediation plan
-- [Dependency Audit](audit/dependency-audit.md) - Dependency risk assessment
+1. **AI detection** — SigLIP classifier flags AI-generated images
+2. **Content analysis** — Gemini extracts labels, brands, safety scores, product category
+3. **SKU estimation** — matches detected department to product catalog
+4. **Risk scoring** — combines signals into a single fraud risk level
 
-### Refactor Plan
-- [Refactor Roadmap](refactor-plan/refactor-roadmap.md) - Prioritized refactoring plan
-- [Architecture Improvements](refactor-plan/architecture-improvements.md) - Proposed architecture changes
+## Setup
 
-### Test Plan
-- [Test Strategy](test-plan/test-strategy.md) - Testing approach and pyramid
-- [Test Gaps](test-plan/test-gaps.md) - Missing test scenarios
+```bash
+uv sync --all-extras
+```
 
-### Security
-- [Security Checklist](security/security-checklist.md) - Do/Don't checklist
-- [Remediation Plan](security/remediation-plan.md) - Step-by-step security fixes
+Set your Gemini API key:
 
-### Documentation
-- [README Outline](docs/readme-outline.md) - README template for the project
-- [Architecture Doc](docs/architecture-doc.md) - Architecture documentation
-- [Runbook Outline](docs/runbook-outline.md) - Operations runbook
+```bash
+export GEMINI_API_KEY=your-key-here
+```
 
-## Priority Order
+## Run tests
 
-1. **CRITICAL:** Fix security findings (S1-S4) - see security/remediation-plan.md
-2. **HIGH:** Delete duplicate test file, add missing unit tests - see test-plan/test-gaps.md
-3. **MEDIUM:** Extract prompts, standardize logging, add error handling
-4. **LOW:** Documentation, CI pipeline, performance optimizations
+```bash
+uv run pytest
+```
+
+## Project structure
+
+```
+src/image/
+  handler.py                    # Orchestrator — validate, process, postprocess
+  exceptions.py                 # ImageAnalysisError, ValidationError
+  analyzers/
+    genai_detection_analyzer.py # SigLIP AI-vs-human classifier
+    gemini_content_analyzer.py  # Gemini vision API content analysis
+    sku_estimator.py            # Department-only SKU matching
+    prompt_builder.py           # Gemini prompt template
+    json_utils.py               # Clean JSON from Gemini responses
+    data_loader.py              # Load feature lists and product catalog
+    images.py                   # Image fetching and validation
+    abstract_image_analyzer.py  # ABC interface
+tests/
+  test_smoke.py                 # End-to-end pipeline tests
+  test_handler.py               # Handler unit tests
+  test_genai_detection_analyzer.py
+  test_gemini_content_analyzer.py
+  test_sku_estimator.py
+  test_data_loader.py
+  test_json_utils.py
+  test_prompt_builder.py
+```

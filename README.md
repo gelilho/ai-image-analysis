@@ -1,23 +1,84 @@
 # AI Image Analysis
 
-Generic image analysis pipeline. Detects AI-generated images, extracts structured content using Gemini, and scores risk.
+Generic image analysis pipeline. Takes image URLs, runs AI detection + Gemini content extraction, returns structured analysis.
 
-## What it does
+## Input
 
-1. **AI detection** — SigLIP classifier flags AI-generated images
-2. **Content analysis** — Gemini extracts labels, brands, safety scores, product category
-3. **SKU estimation** — matches detected department to product catalog
-4. **Risk scoring** — combines signals into a single risk level
+```python
+{
+    "image_urls": [
+        "https://example.com/shoe.jpg",
+        "/local/path/to/photo.png"
+    ]
+}
+```
+
+## Output
+
+```python
+{
+    "final_assessment": {
+        "risk_level": "LOW",              # LOW | MEDIUM | HIGH | CRITICAL
+        "overall_risk_score": 0.12,       # 0.0 - 1.0
+        "recommendation": "APPROVE",      # action to take
+        "confidence": 0.75
+    },
+    "analysis_results": {
+        "ai_detection": {
+            "ai_detected": False,
+            "risk_score": 0.05,
+            "indicators": [...]
+        },
+        "content_analysis": {
+            "individual_analyses": [{
+                "primary_label": "running shoe",
+                "description": "Black running shoe on white background",
+                "detected_brands": ["On"],
+                "is_product_image": True,
+                "image_quality": "high",
+                "dominant_colors": ["black", "white"],
+                "product_category": "shoes",
+                "product_family": ["Cloud"],
+                "product_model": ["5"],
+                "contains_harmful_content": False,
+                "safety_score": 0.97,
+                "on_running_related": True,
+                "image_category": "OTHER",
+                "text_detected": "",
+                "scene_type": "studio"
+            }],
+            "sku": ["SHOE001", "SHOE002"]
+        }
+    },
+    "summary": {
+        "risk_level": "LOW",
+        "ai_detected": False,
+        "action_required": "Can proceed with normal processing"
+    }
+}
+```
+
+## Pipeline
+
+```
+image_urls → validate → preprocess → process → postprocess → output
+                                        │
+                        ┌───────────────┼───────────────┐
+                        ▼                               ▼
+                 SigLIP model                    Gemini Vision API
+              (AI vs human)                  (content extraction)
+                        │                               │
+                        └───────────┬───────────────────┘
+                                    ▼
+                             combine scores
+                                    ▼
+                          risk level + recommendation
+```
 
 ## Setup
 
 ```bash
 uv sync --all-extras
-```
-
-Set your Gemini API key:
-
-```bash
 export GEMINI_API_KEY=your-key-here
 ```
 

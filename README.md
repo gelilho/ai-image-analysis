@@ -79,7 +79,7 @@ image_urls → validate → preprocess → process → postprocess → output
 
 ```bash
 uv sync --all-extras
-export GEMINI_API_KEY=your-key-here
+echo "GEMINI_API_KEY=your-key-here" > .env.local
 ```
 
 ## Run tests

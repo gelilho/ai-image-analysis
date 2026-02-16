@@ -4,9 +4,9 @@
 
 ## System Context
 
-This library is a component of the On Running DSML Platform. It is consumed
-by the platform's handler framework (`dsml-serving-client-sdk`) and provides
-image analysis capabilities for warranty claim processing.
+This library provides image analysis capabilities for warranty claim
+processing. It combines AI-generated image detection with Gemini-based
+content analysis for fraud risk assessment.
 
 ## Component Diagram
 

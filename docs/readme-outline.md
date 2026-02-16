@@ -11,7 +11,7 @@ Combines AI generation detection with content understanding for risk assessment.
 ## Overview
 - What: Dual-analyzer image assessment (AI detection + Gemini content analysis)
 - Why: Automated fraud detection for warranty claims
-- Who: On Running DSML Platform
+- Who: Angel Garcia
 
 ## Architecture
 - [Link to architecture doc]

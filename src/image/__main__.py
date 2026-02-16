@@ -1,9 +1,9 @@
 """Run image analysis from the command line.
 
 Usage:
-    uv run python -m src.image https://example.com/img.jpg
-    uv run python -m src.image /path/to/local.jpg /path/to/other.png
-    uv run python -m src.image image1.jpg image2.png --no-gemini
+    uv run analyze-image https://example.com/img.jpg
+    uv run analyze-image /path/to/local.jpg /path/to/other.png
+    uv run analyze-image image1.jpg image2.png --no-gemini
 """
 
 import json
@@ -21,7 +21,7 @@ def main() -> int:
     flags = {a for a in sys.argv[1:] if a.startswith("--")}
 
     if not args:
-        print("Usage: uv run python -m src.image <image_url> [image_url ...] [--no-gemini] [--no-ai]")
+        print("Usage: analyze-image <image_url> [image_url ...] [--no-gemini] [--no-ai]")
         return 1
 
     handler = ImageAnalysisHandler(config={

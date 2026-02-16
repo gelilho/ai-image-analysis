@@ -86,16 +86,16 @@ echo "GEMINI_API_KEY=your-key-here" > .env.local
 
 ```bash
 # Single image
-uv run python -m src.image https://example.com/shoe.jpg
+uv run analyze-image https://example.com/shoe.jpg
 
 # Multiple images
-uv run python -m src.image image1.jpg image2.png https://cdn.example.com/photo.jpg
+uv run analyze-image image1.jpg image2.png https://cdn.example.com/photo.jpg
 
 # AI detection only (no Gemini)
-uv run python -m src.image photo.jpg --no-gemini
+uv run analyze-image photo.jpg --no-gemini
 
 # Gemini only (no AI detection)
-uv run python -m src.image photo.jpg --no-ai
+uv run analyze-image photo.jpg --no-ai
 ```
 
 ## Run tests

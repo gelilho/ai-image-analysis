@@ -30,6 +30,13 @@ dev = [
     "pytest-cov>=4.1.0",
 ]
 
+[project.scripts]
+analyze-image = "image.__main__:main"
+
+[build-system]
+requires = ["setuptools>=75.0"]
+build-backend = "setuptools.build_meta"
+
 [tool.mypy]
 python_version = "3.12"
 warn_return_any = true

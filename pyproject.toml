@@ -1,7 +1,7 @@
 [project]
 name = "ai-image-analysis"
 version = "2.0.0"
-description = "AI/ML image analysis"
+description = "Generic image analysis pipeline — AI detection, content extraction, risk scoring"
 authors = [
   { name = "Angel Garcia" },
 ]

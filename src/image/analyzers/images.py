@@ -306,7 +306,7 @@ class ImageFetchingService:
         Fetch and validate images from comma-separated URL string.
 
         This is the main entry point that should be called once during
-        preprocessing to fetch all images for a claim.
+        preprocessing to fetch all images for analysis.
 
         Args:
             image_urls: Comma-separated string of image URLs

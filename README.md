@@ -1,13 +1,13 @@
 # AI Image Analysis
 
-Image fraud detection for warranty claims. Detects AI-generated images and analyzes content using Gemini.
+Generic image analysis pipeline. Detects AI-generated images, extracts structured content using Gemini, and scores risk.
 
 ## What it does
 
 1. **AI detection** — SigLIP classifier flags AI-generated images
 2. **Content analysis** — Gemini extracts labels, brands, safety scores, product category
 3. **SKU estimation** — matches detected department to product catalog
-4. **Risk scoring** — combines signals into a single fraud risk level
+4. **Risk scoring** — combines signals into a single risk level
 
 ## Setup
 

@@ -55,10 +55,6 @@ class TestPreprocess:
         assert "timestamp" in result
         assert result["image_urls"] == ["https://x.com/a.jpg"]
 
-    def test_claim_context(self, handler):
-        data = {"image_urls": ["https://x.com/a.jpg"], "claim_id": "C123", "customer_id": "U1"}
-        result = handler.preprocess(data)
-        assert result["claim_context"]["claim_id"] == "C123"
 
 
 class TestProcess:

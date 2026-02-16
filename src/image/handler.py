@@ -81,11 +81,6 @@ class ImageAnalysisHandler:
                 "enable_content_analysis": self.enable_gemini and self.content_analyzer is not None,
             },
         }
-        if "claim_id" in data:
-            result["claim_context"] = {
-                "claim_id": data.get("claim_id"),
-                "customer_id": data.get("customer_id"),
-            }
         return result
 
     # ── Process ──────────────────────────────────────────────────

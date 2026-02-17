@@ -36,19 +36,25 @@ class ImageAnalysisHandler:
 
     def initialize(self) -> None:
         """Create analyzer instances."""
-        try:
-            if self.enable_ai_detection:
+        if self.enable_ai_detection:
+            try:
                 self.ai_detector = GenAIDetectionAnalyzer(
                     local_model_path=self.config.get("ai_model_path"),
                 )
-            if self.enable_gemini:
+            except Exception as e:
+                logger.warning(f"AI detection disabled: {e}")
+                self.ai_detector = None
+
+        if self.enable_gemini:
+            try:
                 self.content_analyzer = GeminiContentAnalyzer(
                     api_key=self.config.get("gemini_api_key"),
                     model_name=self.config.get("gemini_model", "gemini-2.5-pro"),
                     temperature=0.3,
                 )
-        except Exception as e:
-            raise ImageAnalysisError(f"Initialization failed: {e}") from e
+            except Exception as e:
+                logger.warning(f"Gemini disabled: {e}")
+                self.content_analyzer = None
 
     # ── Input validation ─────────────────────────────────────────
 

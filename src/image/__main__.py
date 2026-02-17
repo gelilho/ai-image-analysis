@@ -8,13 +8,16 @@ Usage:
 
 import json
 import sys
+from pathlib import Path
 
 from dotenv import load_dotenv
 
 from .handler import ImageAnalysisHandler
 from .report_logger import log_results
 
-load_dotenv(".env.local")
+# Load .env.local from project root (where pyproject.toml lives)
+_PROJECT_ROOT = Path(__file__).resolve().parents[2]
+load_dotenv(_PROJECT_ROOT / ".env.local")
 
 
 def main() -> int:

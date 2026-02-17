@@ -88,12 +88,12 @@ class TestProcess:
 
 
 class TestDetermineAssessment:
-    def test_critical_multiple_ai(self):
+    def test_ai_detected_gives_medium(self):
         h = ImageAnalysisHandler()
-        assessment = {"combined_risk_score": 1.0, "ai_images_detected": 2, "harmful_content_detected": False}
+        assessment = {"combined_risk_score": 0.3, "ai_images_detected": 2, "harmful_content_detected": False}
         level, rec = h._determine_final_assessment(assessment)
-        assert level == "CRITICAL"
-        assert rec == "BLOCK_IMMEDIATELY"
+        assert level == "MEDIUM"
+        assert rec == "MANUAL_REVIEW"
 
     def test_harmful_content(self):
         h = ImageAnalysisHandler()

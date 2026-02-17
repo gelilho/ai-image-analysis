@@ -33,6 +33,7 @@ COLUMNS = [
     "extracted_fields",
     "brand",
     "detected_brands",
+    "associated_player",
     "image_quality",
     "people_count",
     "classification_labels",
@@ -83,7 +84,7 @@ def _extract_image_fields(img: dict[str, Any]) -> dict[str, Any]:
     row: dict[str, Any] = {}
     per_image_keys = [
         "primary_label", "description", "objects_detected", "raw_text",
-        "extracted_fields", "brand", "detected_brands", "image_quality",
+        "extracted_fields", "brand", "detected_brands", "associated_player", "image_quality",
         "people_count", "classification_labels", "labels",
         "contains_harmful_content", "harmful_content_type", "safety_score",
         "on_running_related", "on_running_confidence", "on_running_details",

@@ -167,9 +167,12 @@ class GenAIDetectionAnalyzer(AbstractImageAnalyzer):
                 for i in self.ai_detector_model.config.id2label
             }
 
-            is_ai = label.lower() == "ai"
-            if is_ai:
-                logger.info(f"AI image detected: {confidence:.0%} confidence")
+            is_ai = label.lower() == "ai" and confidence >= 0.75
+            if label.lower() == "ai":
+                logger.info(
+                    f"AI detection: {confidence:.0%} confidence"
+                    f" ({'FLAGGED' if is_ai else 'below threshold, ignored'})"
+                )
 
             return {
                 "is_ai": is_ai,

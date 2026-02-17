@@ -34,6 +34,7 @@ Analyze this image and provide a detailed JSON response with the following struc
     ],
     "brand": "main brand or company visible in the image (e.g. Nike, Mercedes, Vueling, Apple, etc.) or null if none",
     "detected_brands": ["all", "brands", "visible"],
+    "associated_player": "athlete/celebrity associated with the product based on logos, signatures, or branding visible on the product — or null if none",
     "image_quality": "high|medium|low",
     "people_count": 0,
     "classification_labels": [
@@ -86,9 +87,10 @@ Use product names from this list for receipts: {products}
 GUIDELINES:
 - Provide 1-5 classification labels ranked by relevance
 - objects_detected: list EVERY distinct object visible in the image
-- raw_text: capture ALL text visible in the image as an array of strings (one per text block/sentence)
+- raw_text: transcribe ALL text EXACTLY as it appears in the image, character by character. Do NOT interpret or guess — read the actual letters. If text says "VJR" report "VJR", not "NJR". If text says "VINI VOA" report "VINI VOA".
 - extracted_fields: extract ALL structured text fields with individual confidence scores — not just tags, ANY image with text
 - brand: identify the main brand/company from logos, text, or product design (Nike for shoes, Mercedes for cars, Apple for electronics, etc.)
+- associated_player: identify the athlete from branding/logos ON the product. Read logos literally — "VJR" = Vinicius Jr., "NJR" = Neymar Jr., "CR7" = Cristiano Ronaldo, "MB" = Kylian Mbappe. Do NOT guess — only attribute if you can read a clear logo or text.
 - people_count: count all people visible in the image (0 if none)
 - For On Running detection look for: CloudTec, Swiss Engineering, on-running.com
 - For product fields: always give your best guess, never return None

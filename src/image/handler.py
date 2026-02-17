@@ -196,13 +196,11 @@ class ImageAnalysisHandler:
         score = c.get("combined_risk_score", 0.0)
         ai_count = c.get("ai_images_detected", 0)
 
-        if ai_count >= 2:
-            return "CRITICAL", "BLOCK_IMMEDIATELY"
         if c.get("harmful_content_detected"):
             return "HIGH", "MANUAL_REVIEW_URGENT"
-        if score >= self.risk_threshold_high or ai_count > 0:
-            return "HIGH", "BLOCK_AND_INVESTIGATE"
-        if score >= self.risk_threshold_medium:
+        if score >= self.risk_threshold_high:
+            return "HIGH", "MANUAL_REVIEW"
+        if ai_count > 0 or score >= self.risk_threshold_medium:
             return "MEDIUM", "MANUAL_REVIEW"
         return "LOW", "APPROVE"
 

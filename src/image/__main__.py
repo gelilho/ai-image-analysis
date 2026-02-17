@@ -12,6 +12,7 @@ import sys
 from dotenv import load_dotenv
 
 from .handler import ImageAnalysisHandler
+from .report_logger import log_results
 
 load_dotenv(".env.local")
 
@@ -37,6 +38,9 @@ def main() -> int:
     output = handler.postprocess(result)
 
     print(json.dumps(output, indent=2, default=str))
+
+    csv_path = log_results(args, output)
+    print(f"\nReport saved → {csv_path}")
     return 0
 
 

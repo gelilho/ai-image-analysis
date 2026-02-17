@@ -98,6 +98,19 @@ uv run analyze-image photo.jpg --no-gemini
 uv run analyze-image photo.jpg --no-ai
 ```
 
+## Reports
+
+Every run appends a row per image to a daily CSV file in `reports/`:
+
+```
+reports/analysis_2025-06-15.csv
+```
+
+| timestamp | image_url | risk_level | risk_score | recommendation | confidence | ai_detected | harmful_content | processing_time_ms | model_version |
+|-----------|-----------|------------|------------|----------------|------------|-------------|-----------------|-------------------|---------------|
+
+The `reports/` folder is gitignored — it's local-only output.
+
 ## Run tests
 
 ```bash
@@ -109,6 +122,7 @@ uv run pytest
 ```
 src/image/
   handler.py                    # Orchestrator — validate, process, postprocess
+  report_logger.py              # CSV logger — one row per image per run
   exceptions.py                 # ImageAnalysisError, ValidationError
   analyzers/
     genai_detection_analyzer.py # SigLIP AI-vs-human classifier
@@ -128,4 +142,5 @@ tests/
   test_data_loader.py
   test_json_utils.py
   test_prompt_builder.py
+  test_report_logger.py
 ```

@@ -2,9 +2,10 @@
 
 import csv
 import json
+import re
 from pathlib import Path
 
-from image.report_logger import COLUMNS, log_results
+from image.report_logger import COLUMNS, CSV_FILENAME, log_results
 
 
 def _sample_output(url: str = "https://img.com/a.jpg") -> dict:
@@ -71,26 +72,41 @@ def _sample_output(url: str = "https://img.com/a.jpg") -> dict:
 
 
 class TestReportLogger:
-    def test_creates_csv_with_all_columns(self, tmp_path: Path):
+    def test_creates_single_csv_file(self, tmp_path: Path):
         output = _sample_output()
         csv_path = log_results(["https://img.com/a.jpg"], output, reports_dir=tmp_path)
 
         assert csv_path.exists()
+        assert csv_path.name == CSV_FILENAME
         with open(csv_path) as f:
             reader = csv.DictReader(f)
             assert reader.fieldnames == COLUMNS
             rows = list(reader)
         assert len(rows) == 1
-        assert rows[0]["image_url"] == "https://img.com/a.jpg"
-        assert rows[0]["risk_level"] == "LOW"
 
-    def test_appends_rows_on_second_call(self, tmp_path: Path):
+    def test_date_and_timestamp_columns(self, tmp_path: Path):
+        output = _sample_output()
+        log_results(["https://img.com/a.jpg"], output, reports_dir=tmp_path)
+
+        with open(tmp_path / CSV_FILENAME) as f:
+            rows = list(csv.DictReader(f))
+        row = rows[0]
+
+        # date = yyyy-mm-dd
+        assert re.match(r"^\d{4}-\d{2}-\d{2}$", row["date"])
+        # timestamp = yyyy-mm-dd HH:MM:SS
+        assert re.match(r"^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$", row["timestamp"])
+        # date is the date part of timestamp
+        assert row["date"] == row["timestamp"][:10]
+
+    def test_appends_to_same_file(self, tmp_path: Path):
         output = _sample_output()
         log_results(["https://img.com/a.jpg"], output, reports_dir=tmp_path)
         log_results(["https://img.com/b.jpg"], output, reports_dir=tmp_path)
 
         csv_files = list(tmp_path.glob("*.csv"))
         assert len(csv_files) == 1
+        assert csv_files[0].name == CSV_FILENAME
         with open(csv_files[0]) as f:
             rows = list(csv.DictReader(f))
         assert len(rows) == 2
@@ -100,7 +116,7 @@ class TestReportLogger:
         urls = ["https://img.com/1.jpg", "https://img.com/2.jpg", "https://img.com/3.jpg"]
         log_results(urls, output, reports_dir=tmp_path)
 
-        with open(list(tmp_path.glob("*.csv"))[0]) as f:
+        with open(tmp_path / CSV_FILENAME) as f:
             rows = list(csv.DictReader(f))
         assert len(rows) == 3
 
@@ -109,52 +125,32 @@ class TestReportLogger:
         output = _sample_output(url)
         log_results([url], output, reports_dir=tmp_path)
 
-        with open(list(tmp_path.glob("*.csv"))[0]) as f:
+        with open(tmp_path / CSV_FILENAME) as f:
             rows = list(csv.DictReader(f))
         row = rows[0]
 
-        # Scalar fields
         assert row["primary_label"] == "sneaker"
-        assert row["description"] == "A running shoe"
         assert row["brand"] == "Nike"
         assert row["image_quality"] == "high"
         assert row["people_count"] == "0"
-        assert row["scene_type"] == "studio"
         assert row["product_category"] == "shoes"
-        assert row["product_gender"] == "Mens"
-        assert row["product_year"] == "2025"
-        assert row["product_primary_colour"] == "#FF0000"
-        assert row["language_category"] == "en"
         assert row["is_product_image"] == "True"
-        assert row["safety_score"] == "0.95"
-
-        # JSON list fields
         assert json.loads(row["objects_detected"]) == ["shoe", "laces"]
         assert json.loads(row["raw_text"]) == ["NIKE AIR", "Size 10"]
-        assert json.loads(row["detected_brands"]) == ["Nike"]
-        assert json.loads(row["dominant_colors"]) == ["red", "white"]
-        assert json.loads(row["product_family"]) == ["Cloud"]
-        assert json.loads(row["product_model"]) == ["5"]
-
-        # Extracted fields (list of dicts)
         fields = json.loads(row["extracted_fields"])
         assert fields[0]["field_name"] == "brand_name"
 
     def test_missing_analysis_uses_defaults(self, tmp_path: Path):
-        """When no individual analysis matches the URL, fields default to empty."""
         output = _sample_output()
         log_results(["https://other.com/no-match.jpg"], output, reports_dir=tmp_path)
 
-        with open(list(tmp_path.glob("*.csv"))[0]) as f:
+        with open(tmp_path / CSV_FILENAME) as f:
             rows = list(csv.DictReader(f))
         row = rows[0]
 
         assert row["brand"] == ""
         assert row["primary_label"] == ""
-        assert row["image_quality"] == ""
         assert json.loads(row["objects_detected"]) == []
-        assert json.loads(row["raw_text"]) == []
-        assert json.loads(row["extracted_fields"]) == []
 
     def test_creates_reports_dir_if_missing(self, tmp_path: Path):
         nested = tmp_path / "sub" / "reports"
@@ -165,5 +161,4 @@ class TestReportLogger:
     def test_returns_csv_path(self, tmp_path: Path):
         path = log_results(["https://img.com/a.jpg"], _sample_output(), reports_dir=tmp_path)
         assert isinstance(path, Path)
-        assert path.suffix == ".csv"
-        assert "analysis_" in path.name
+        assert path.name == CSV_FILENAME

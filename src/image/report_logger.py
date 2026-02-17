@@ -10,11 +10,11 @@ from typing import Any
 from loguru import logger
 
 REPORTS_DIR = Path("reports")
+CSV_FILENAME = "analysis_output.csv"
 
-# -- Pipeline-level columns (same for all images in one run) --
-# -- Per-image columns (from Gemini individual_analyses) --
 COLUMNS = [
     # Run metadata
+    "date",
     "timestamp",
     "image_url",
     "risk_level",
@@ -80,7 +80,6 @@ def _find_analysis(url: str, analyses: list[dict[str, Any]]) -> dict[str, Any]:
 def _extract_image_fields(img: dict[str, Any]) -> dict[str, Any]:
     """Extract all per-image fields from a Gemini analysis result."""
     row: dict[str, Any] = {}
-    # Every Gemini field that lives on the per-image analysis
     per_image_keys = [
         "primary_label", "description", "objects_detected", "raw_text",
         "extracted_fields", "brand", "detected_brands", "image_quality",
@@ -104,14 +103,13 @@ def log_results(
     output: dict[str, Any],
     reports_dir: Path = REPORTS_DIR,
 ) -> Path:
-    """Append analysis results to a daily CSV file. One row per image.
+    """Append analysis results to analysis_output.csv. One row per image.
 
     Returns the path to the CSV file written to.
     """
     reports_dir.mkdir(parents=True, exist_ok=True)
 
-    today = datetime.now().strftime("%Y-%m-%d")
-    csv_path = reports_dir / f"analysis_{today}.csv"
+    csv_path = reports_dir / CSV_FILENAME
     file_exists = csv_path.exists()
 
     fa = output.get("final_assessment", {})
@@ -120,10 +118,12 @@ def log_results(
     content = output.get("analysis_results", {}).get("content_analysis", {})
     analyses = content.get("analysis_details", {}).get("individual_analyses", [])
 
-    timestamp = datetime.now().isoformat()
+    now = datetime.now()
+    date = now.strftime("%Y-%m-%d")
+    timestamp = now.strftime("%Y-%m-%d %H:%M:%S")
 
-    # Shared fields across all images in this run
     shared = {
+        "date": date,
         "timestamp": timestamp,
         "risk_level": fa.get("risk_level", "UNKNOWN"),
         "risk_score": fa.get("overall_risk_score", 0.0),

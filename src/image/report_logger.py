@@ -1,6 +1,7 @@
 """CSV report logger — appends one row per image after each analysis run."""
 
 import csv
+import json
 import os
 from datetime import datetime
 from pathlib import Path
@@ -19,9 +20,23 @@ COLUMNS = [
     "confidence",
     "ai_detected",
     "harmful_content",
+    "brand",
+    "objects_detected",
+    "raw_text",
+    "extracted_fields",
+    "image_quality",
+    "people_count",
     "processing_time_ms",
     "model_version",
 ]
+
+
+def _find_analysis(url: str, analyses: list[dict[str, Any]]) -> dict[str, Any]:
+    """Find the individual analysis dict matching this URL."""
+    for a in analyses:
+        if a.get("image_url") == url:
+            return a
+    return {}
 
 
 def log_results(
@@ -42,6 +57,8 @@ def log_results(
     fa = output.get("final_assessment", {})
     combined = output.get("combined_assessment", {})
     processing = output.get("processing_details", {})
+    content = output.get("analysis_results", {}).get("content_analysis", {})
+    analyses = content.get("analysis_details", {}).get("individual_analyses", [])
 
     timestamp = datetime.now().isoformat()
     risk_level = fa.get("risk_level", "UNKNOWN")
@@ -55,6 +72,7 @@ def log_results(
 
     rows = []
     for url in image_urls:
+        img = _find_analysis(url, analyses)
         rows.append({
             "timestamp": timestamp,
             "image_url": url,
@@ -64,6 +82,12 @@ def log_results(
             "confidence": confidence,
             "ai_detected": ai_detected,
             "harmful_content": harmful,
+            "brand": img.get("brand", ""),
+            "objects_detected": json.dumps(img.get("objects_detected", [])),
+            "raw_text": json.dumps(img.get("raw_text", [])),
+            "extracted_fields": json.dumps(img.get("extracted_fields", [])),
+            "image_quality": img.get("image_quality", ""),
+            "people_count": img.get("people_count", 0),
             "processing_time_ms": processing_ms,
             "model_version": model_version,
         })

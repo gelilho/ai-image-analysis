@@ -33,18 +33,24 @@ Generic image analysis pipeline. Takes image URLs, runs AI detection + Gemini co
             "individual_analyses": [{
                 "primary_label": "running shoe",
                 "description": "Black running shoe on white background",
+                "objects_detected": ["shoe", "laces", "sole", "box"],
+                "raw_text": ["On", "CloudMonster 2", "Swiss Engineering"],
+                "extracted_fields": [
+                    {"field_name": "brand_name", "value": "On", "confidence": 98},
+                    {"field_name": "model_name", "value": "CloudMonster 2", "confidence": 95},
+                    {"field_name": "size_us", "value": "10", "confidence": 90}
+                ],
+                "brand": "On",
                 "detected_brands": ["On"],
-                "is_product_image": True,
                 "image_quality": "high",
+                "people_count": 0,
+                "is_product_image": True,
                 "dominant_colors": ["black", "white"],
                 "product_category": "shoes",
                 "product_family": ["Cloud"],
-                "product_model": ["5"],
+                "product_model": ["CloudMonster"],
                 "contains_harmful_content": False,
                 "safety_score": 0.97,
-                "on_running_related": True,
-                "image_category": "OTHER",
-                "text_detected": "",
                 "scene_type": "studio"
             }],
             "sku": ["SHOE001", "SHOE002"]
@@ -106,8 +112,8 @@ Every run appends a row per image to a daily CSV file in `reports/`:
 reports/analysis_2025-06-15.csv
 ```
 
-| timestamp | image_url | risk_level | risk_score | recommendation | confidence | ai_detected | harmful_content | processing_time_ms | model_version |
-|-----------|-----------|------------|------------|----------------|------------|-------------|-----------------|-------------------|---------------|
+| timestamp | image_url | risk_level | risk_score | recommendation | confidence | ai_detected | harmful_content | brand | objects_detected | raw_text | extracted_fields | image_quality | people_count | processing_time_ms | model_version |
+|-----------|-----------|------------|------------|----------------|------------|-------------|-----------------|-------|-----------------|----------|-----------------|--------------|--------------|-------------------|---------------|
 
 The `reports/` folder is gitignored — it's local-only output.
 

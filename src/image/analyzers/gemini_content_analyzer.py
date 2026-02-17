@@ -218,12 +218,12 @@ class GeminiContentAnalyzer(AbstractImageAnalyzer):
                 "image_index": idx,
             })
 
-        tag = analysis.get("tag_information", {})
-        if tag.get("is_tag_present") and tag.get("overall_confidence", 0) > 70:
+        extracted = analysis.get("extracted_fields", [])
+        if extracted:
             indicators.append({
-                "type": "TAG", "indicator": "shoe_tag_detected",
+                "type": "TEXT", "indicator": "fields_extracted",
                 "severity": "INFO",
-                "details": f"Image {idx + 1}: {len(tag.get('extracted_fields', []))} fields extracted",
+                "details": f"Image {idx + 1}: {len(extracted)} fields extracted",
                 "image_index": idx,
             })
 
@@ -268,17 +268,20 @@ def _generate_summary(analyses: list[dict[str, Any]], indicators: list[dict[str,
     counts = {
         "harmful": sum(1 for a in analyses if a.get("contains_harmful_content")),
         "on_running": sum(1 for a in analyses if a.get("on_running_related")),
-        "tags": sum(1 for a in analyses if a.get("tag_information", {}).get("is_tag_present")),
+        "with_text": sum(1 for a in analyses if a.get("extracted_fields")),
         "products": sum(1 for a in analyses if a.get("is_product_image")),
+        "brands": sum(1 for a in analyses if a.get("brand")),
     }
     if counts["harmful"]:
         parts.append(f"{counts['harmful']} contain harmful content.")
     if counts["on_running"]:
         parts.append(f"{counts['on_running']} related to On Running.")
-    if counts["tags"]:
-        parts.append(f"{counts['tags']} shoe tags detected.")
+    if counts["with_text"]:
+        parts.append(f"{counts['with_text']} with extracted text fields.")
     if counts["products"]:
         parts.append(f"{counts['products']} product images.")
+    if counts["brands"]:
+        parts.append(f"{counts['brands']} with brand detection.")
 
     high = sum(1 for i in indicators if i.get("severity") == "HIGH")
     if high:

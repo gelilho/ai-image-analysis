@@ -6,26 +6,27 @@ from unittest.mock import Mock, patch
 import pytest
 
 _DEFAULT_RESPONSE = json.dumps({
-    "classification_labels": [{"label": "footwear", "confidence": 95}],
-    "tag_information": {"is_tag_present": False, "extracted_fields": [], "raw_text": "", "overall_confidence": 0},
-    "labels": ["sneaker", "shoe"],
     "primary_label": "sneaker",
     "description": "A running shoe",
-    "objects_detected": ["shoe"],
+    "objects_detected": ["shoe", "laces"],
+    "raw_text": ["NIKE AIR"],
+    "extracted_fields": [],
+    "brand": "Nike",
+    "detected_brands": ["Nike"],
+    "image_quality": "high",
+    "people_count": 0,
+    "classification_labels": [{"label": "footwear", "confidence": 95}],
+    "labels": ["sneaker", "shoe"],
     "contains_harmful_content": False,
     "harmful_content_type": None,
     "safety_score": 0.95,
     "on_running_related": False,
     "on_running_confidence": 0.1,
     "on_running_details": None,
-    "detected_brands": ["Nike"],
     "is_product_image": True,
     "is_athletic_content": True,
-    "image_quality": "high",
     "dominant_colors": ["red", "white"],
     "scene_type": "studio",
-    "people_count": 0,
-    "text_detected": "NIKE AIR",
     "image_category": "OTHER",
     "product_category": "shoes",
     "product_gender": "Mens",
@@ -131,18 +132,17 @@ class TestGeminiContentAnalyzer:
         result = analyzer.analyze_images(["https://example.com/on.jpg"])
         assert any(i["indicator"] == "on_running_content" for i in result["indicators"])
 
-    def test_tag_detection(self, analyzer, mock_deps):
-        tag_resp = json.loads(_DEFAULT_RESPONSE)
-        tag_resp["tag_information"] = {
-            "is_tag_present": True,
-            "extracted_fields": [{"field_name": "size_us", "value": "10", "confidence": 95}],
-            "raw_text": "Size US 10",
-            "overall_confidence": 90,
-        }
-        mock_deps["client"].models.generate_content.return_value.text = json.dumps(tag_resp)
+    def test_extracted_fields_detection(self, analyzer, mock_deps):
+        resp = json.loads(_DEFAULT_RESPONSE)
+        resp["extracted_fields"] = [
+            {"field_name": "size_us", "value": "10", "confidence": 95},
+            {"field_name": "brand_name", "value": "Nike", "confidence": 98},
+        ]
+        resp["raw_text"] = ["Size US 10", "Nike Air Max"]
+        mock_deps["client"].models.generate_content.return_value.text = json.dumps(resp)
 
         result = analyzer.analyze_images(["https://example.com/tag.jpg"])
-        assert any(i["indicator"] == "shoe_tag_detected" for i in result["indicators"])
+        assert any(i["indicator"] == "fields_extracted" for i in result["indicators"])
 
     def test_validation_failure(self, analyzer, mock_deps):
         vr = Mock()

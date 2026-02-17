@@ -24,7 +24,7 @@ class TestBuildAnalysisPrompt:
     def test_contains_json_structure(self):
         prompt = build_analysis_prompt([], [], [], [], [])
         assert "classification_labels" in prompt
-        assert "tag_information" in prompt
+        assert "extracted_fields" in prompt
 
     def test_multiple_verticals(self):
         prompt = build_analysis_prompt([], [], ["Trail", "Training"], [], [])

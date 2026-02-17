@@ -34,18 +34,21 @@ class TestValidateInput:
             h.validate_input({"image_urls": ["a", "b", "c"]})
 
     def test_non_string_url(self, handler):
-        with pytest.raises(ValidationError, match="must be a string"):
+        with pytest.raises(ValidationError, match="non-empty string"):
             handler.validate_input({"image_urls": [123]})
 
-    def test_invalid_url_format(self, handler):
-        with pytest.raises(ValidationError, match="Invalid URL"):
-            handler.validate_input({"image_urls": ["not-a-url"]})
+    def test_empty_string_url(self, handler):
+        with pytest.raises(ValidationError, match="non-empty string"):
+            handler.validate_input({"image_urls": ["  "]})
 
     def test_valid_urls(self, handler):
         handler.validate_input({"image_urls": ["https://img.com/a.jpg", "file://local.png"]})
 
     def test_local_path_valid(self, handler):
         handler.validate_input({"image_urls": ["/path/to/image.jpg"]})
+
+    def test_local_filename_valid(self, handler):
+        handler.validate_input({"image_urls": ["botas fultbol.png", "FOOTBALL2.png"]})
 
 
 class TestPreprocess:

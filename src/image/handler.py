@@ -72,12 +72,8 @@ class ImageAnalysisHandler:
             raise ValidationError(f"Too many images: {len(urls)} (max: {self.max_images})")
 
         for i, url in enumerate(urls):
-            if not isinstance(url, str):
-                raise ValidationError(f"Image URL at index {i} must be a string")
-            is_url = url.startswith(("http://", "https://", "file://"))
-            is_path = "/" in url or Path(url).exists()
-            if not is_url and not is_path:
-                raise ValidationError(f"Invalid URL or file path at index {i}: {url}")
+            if not isinstance(url, str) or not url.strip():
+                raise ValidationError(f"Image URL at index {i} must be a non-empty string")
 
     # ── Preprocess ───────────────────────────────────────────────
 

@@ -2,6 +2,7 @@
 
 import time
 from datetime import datetime
+from pathlib import Path
 from typing import Any
 
 from loguru import logger
@@ -73,8 +74,10 @@ class ImageAnalysisHandler:
         for i, url in enumerate(urls):
             if not isinstance(url, str):
                 raise ValidationError(f"Image URL at index {i} must be a string")
-            if not (url.startswith(("http://", "https://", "file://")) or "/" in url):
-                raise ValidationError(f"Invalid URL format at index {i}: {url}")
+            is_url = url.startswith(("http://", "https://", "file://"))
+            is_path = "/" in url or Path(url).exists()
+            if not is_url and not is_path:
+                raise ValidationError(f"Invalid URL or file path at index {i}: {url}")
 
     # ── Preprocess ───────────────────────────────────────────────
 

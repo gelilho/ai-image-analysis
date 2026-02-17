@@ -11,7 +11,10 @@ from loguru import logger
 
 REPORTS_DIR = Path("reports")
 
+# -- Pipeline-level columns (same for all images in one run) --
+# -- Per-image columns (from Gemini individual_analyses) --
 COLUMNS = [
+    # Run metadata
     "timestamp",
     "image_url",
     "risk_level",
@@ -19,16 +22,51 @@ COLUMNS = [
     "recommendation",
     "confidence",
     "ai_detected",
-    "harmful_content",
-    "brand",
+    "processing_time_ms",
+    "model_version",
+    # Per-image Gemini fields
+    "primary_label",
+    "description",
     "objects_detected",
     "raw_text",
     "extracted_fields",
+    "brand",
+    "detected_brands",
     "image_quality",
     "people_count",
-    "processing_time_ms",
-    "model_version",
+    "classification_labels",
+    "labels",
+    "contains_harmful_content",
+    "harmful_content_type",
+    "safety_score",
+    "on_running_related",
+    "on_running_confidence",
+    "on_running_details",
+    "is_product_image",
+    "is_athletic_content",
+    "dominant_colors",
+    "scene_type",
+    "image_category",
+    "product_category",
+    "product_gender",
+    "product_year",
+    "product_season",
+    "product_vertical",
+    "product_family",
+    "product_model",
+    "product_generation",
+    "product_primary_colour",
+    "product_secondary_colour",
+    "language_category",
+    "receipt_fields",
 ]
+
+# Fields that contain lists/dicts and need JSON serialization
+_JSON_FIELDS = {
+    "objects_detected", "raw_text", "extracted_fields", "detected_brands",
+    "classification_labels", "labels", "dominant_colors", "product_family",
+    "product_model", "receipt_fields",
+}
 
 
 def _find_analysis(url: str, analyses: list[dict[str, Any]]) -> dict[str, Any]:
@@ -37,6 +75,28 @@ def _find_analysis(url: str, analyses: list[dict[str, Any]]) -> dict[str, Any]:
         if a.get("image_url") == url:
             return a
     return {}
+
+
+def _extract_image_fields(img: dict[str, Any]) -> dict[str, Any]:
+    """Extract all per-image fields from a Gemini analysis result."""
+    row: dict[str, Any] = {}
+    # Every Gemini field that lives on the per-image analysis
+    per_image_keys = [
+        "primary_label", "description", "objects_detected", "raw_text",
+        "extracted_fields", "brand", "detected_brands", "image_quality",
+        "people_count", "classification_labels", "labels",
+        "contains_harmful_content", "harmful_content_type", "safety_score",
+        "on_running_related", "on_running_confidence", "on_running_details",
+        "is_product_image", "is_athletic_content", "dominant_colors",
+        "scene_type", "image_category", "product_category", "product_gender",
+        "product_year", "product_season", "product_vertical", "product_family",
+        "product_model", "product_generation", "product_primary_colour",
+        "product_secondary_colour", "language_category", "receipt_fields",
+    ]
+    for key in per_image_keys:
+        val = img.get(key, "" if key not in _JSON_FIELDS else [])
+        row[key] = json.dumps(val) if key in _JSON_FIELDS else val
+    return row
 
 
 def log_results(
@@ -61,36 +121,24 @@ def log_results(
     analyses = content.get("analysis_details", {}).get("individual_analyses", [])
 
     timestamp = datetime.now().isoformat()
-    risk_level = fa.get("risk_level", "UNKNOWN")
-    risk_score = fa.get("overall_risk_score", 0.0)
-    recommendation = fa.get("recommendation", "")
-    confidence = fa.get("confidence", 0.0)
-    ai_detected = combined.get("ai_images_detected", 0) > 0
-    harmful = combined.get("harmful_content_detected", False)
-    processing_ms = processing.get("processing_time_ms", 0)
-    model_version = output.get("model_version", "")
+
+    # Shared fields across all images in this run
+    shared = {
+        "timestamp": timestamp,
+        "risk_level": fa.get("risk_level", "UNKNOWN"),
+        "risk_score": fa.get("overall_risk_score", 0.0),
+        "recommendation": fa.get("recommendation", ""),
+        "confidence": fa.get("confidence", 0.0),
+        "ai_detected": combined.get("ai_images_detected", 0) > 0,
+        "processing_time_ms": processing.get("processing_time_ms", 0),
+        "model_version": output.get("model_version", ""),
+    }
 
     rows = []
     for url in image_urls:
         img = _find_analysis(url, analyses)
-        rows.append({
-            "timestamp": timestamp,
-            "image_url": url,
-            "risk_level": risk_level,
-            "risk_score": risk_score,
-            "recommendation": recommendation,
-            "confidence": confidence,
-            "ai_detected": ai_detected,
-            "harmful_content": harmful,
-            "brand": img.get("brand", ""),
-            "objects_detected": json.dumps(img.get("objects_detected", [])),
-            "raw_text": json.dumps(img.get("raw_text", [])),
-            "extracted_fields": json.dumps(img.get("extracted_fields", [])),
-            "image_quality": img.get("image_quality", ""),
-            "people_count": img.get("people_count", 0),
-            "processing_time_ms": processing_ms,
-            "model_version": model_version,
-        })
+        row = {**shared, "image_url": url, **_extract_image_fields(img)}
+        rows.append(row)
 
     with open(csv_path, "a", newline="") as f:
         writer = csv.DictWriter(f, fieldnames=COLUMNS)

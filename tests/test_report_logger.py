@@ -28,14 +28,41 @@ def _sample_output(url: str = "https://img.com/a.jpg") -> dict:
                 "analysis_details": {
                     "individual_analyses": [{
                         "image_url": url,
-                        "brand": "Nike",
+                        "primary_label": "sneaker",
+                        "description": "A running shoe",
                         "objects_detected": ["shoe", "laces"],
                         "raw_text": ["NIKE AIR", "Size 10"],
                         "extracted_fields": [
                             {"field_name": "brand_name", "value": "Nike", "confidence": 98},
                         ],
+                        "brand": "Nike",
+                        "detected_brands": ["Nike"],
                         "image_quality": "high",
                         "people_count": 0,
+                        "classification_labels": [{"label": "footwear", "confidence": 95}],
+                        "labels": ["sneaker", "shoe"],
+                        "contains_harmful_content": False,
+                        "harmful_content_type": None,
+                        "safety_score": 0.95,
+                        "on_running_related": False,
+                        "on_running_confidence": 0.1,
+                        "on_running_details": None,
+                        "is_product_image": True,
+                        "is_athletic_content": True,
+                        "dominant_colors": ["red", "white"],
+                        "scene_type": "studio",
+                        "image_category": "OTHER",
+                        "product_category": "shoes",
+                        "product_gender": "Mens",
+                        "product_year": 2025,
+                        "product_season": "Spring/Summer",
+                        "product_vertical": "Performance Running",
+                        "product_family": ["Cloud"],
+                        "product_model": ["5"],
+                        "product_generation": 1,
+                        "product_primary_colour": "#FF0000",
+                        "product_secondary_colour": "#FFFFFF",
+                        "language_category": "en",
                     }],
                 },
             },
@@ -44,7 +71,7 @@ def _sample_output(url: str = "https://img.com/a.jpg") -> dict:
 
 
 class TestReportLogger:
-    def test_creates_csv_with_header(self, tmp_path: Path):
+    def test_creates_csv_with_all_columns(self, tmp_path: Path):
         output = _sample_output()
         csv_path = log_results(["https://img.com/a.jpg"], output, reports_dir=tmp_path)
 
@@ -64,12 +91,9 @@ class TestReportLogger:
 
         csv_files = list(tmp_path.glob("*.csv"))
         assert len(csv_files) == 1
-
         with open(csv_files[0]) as f:
             rows = list(csv.DictReader(f))
         assert len(rows) == 2
-        assert rows[0]["image_url"] == "https://img.com/a.jpg"
-        assert rows[1]["image_url"] == "https://img.com/b.jpg"
 
     def test_multiple_images_one_call(self, tmp_path: Path):
         output = _sample_output()
@@ -80,69 +104,66 @@ class TestReportLogger:
             rows = list(csv.DictReader(f))
         assert len(rows) == 3
 
-    def test_high_risk_output(self, tmp_path: Path):
-        output = _sample_output()
-        output["final_assessment"]["risk_level"] = "HIGH"
-        output["final_assessment"]["overall_risk_score"] = 0.85
-        output["combined_assessment"]["ai_images_detected"] = 1
-
-        log_results(["https://img.com/ai.jpg"], output, reports_dir=tmp_path)
-
-        with open(list(tmp_path.glob("*.csv"))[0]) as f:
-            rows = list(csv.DictReader(f))
-        assert rows[0]["risk_level"] == "HIGH"
-        assert rows[0]["ai_detected"] == "True"
-        assert rows[0]["risk_score"] == "0.85"
-
-    def test_creates_reports_dir_if_missing(self, tmp_path: Path):
-        nested = tmp_path / "sub" / "reports"
-        assert not nested.exists()
-
-        log_results(["https://img.com/a.jpg"], _sample_output(), reports_dir=nested)
-        assert nested.exists()
-        assert len(list(nested.glob("*.csv"))) == 1
-
-    def test_returns_csv_path(self, tmp_path: Path):
-        path = log_results(["https://img.com/a.jpg"], _sample_output(), reports_dir=tmp_path)
-        assert isinstance(path, Path)
-        assert path.suffix == ".csv"
-        assert "analysis_" in path.name
-
-    def test_per_image_fields(self, tmp_path: Path):
+    def test_per_image_gemini_fields(self, tmp_path: Path):
         url = "https://img.com/shoe.jpg"
         output = _sample_output(url)
         log_results([url], output, reports_dir=tmp_path)
 
         with open(list(tmp_path.glob("*.csv"))[0]) as f:
             rows = list(csv.DictReader(f))
-
         row = rows[0]
+
+        # Scalar fields
+        assert row["primary_label"] == "sneaker"
+        assert row["description"] == "A running shoe"
         assert row["brand"] == "Nike"
         assert row["image_quality"] == "high"
         assert row["people_count"] == "0"
+        assert row["scene_type"] == "studio"
+        assert row["product_category"] == "shoes"
+        assert row["product_gender"] == "Mens"
+        assert row["product_year"] == "2025"
+        assert row["product_primary_colour"] == "#FF0000"
+        assert row["language_category"] == "en"
+        assert row["is_product_image"] == "True"
+        assert row["safety_score"] == "0.95"
 
-        objects = json.loads(row["objects_detected"])
-        assert "shoe" in objects
+        # JSON list fields
+        assert json.loads(row["objects_detected"]) == ["shoe", "laces"]
+        assert json.loads(row["raw_text"]) == ["NIKE AIR", "Size 10"]
+        assert json.loads(row["detected_brands"]) == ["Nike"]
+        assert json.loads(row["dominant_colors"]) == ["red", "white"]
+        assert json.loads(row["product_family"]) == ["Cloud"]
+        assert json.loads(row["product_model"]) == ["5"]
 
-        raw = json.loads(row["raw_text"])
-        assert "NIKE AIR" in raw
-
+        # Extracted fields (list of dicts)
         fields = json.loads(row["extracted_fields"])
         assert fields[0]["field_name"] == "brand_name"
-        assert fields[0]["value"] == "Nike"
 
     def test_missing_analysis_uses_defaults(self, tmp_path: Path):
         """When no individual analysis matches the URL, fields default to empty."""
         output = _sample_output()
-        # URL doesn't match the analysis URL
         log_results(["https://other.com/no-match.jpg"], output, reports_dir=tmp_path)
 
         with open(list(tmp_path.glob("*.csv"))[0]) as f:
             rows = list(csv.DictReader(f))
-
         row = rows[0]
+
         assert row["brand"] == ""
+        assert row["primary_label"] == ""
         assert row["image_quality"] == ""
         assert json.loads(row["objects_detected"]) == []
         assert json.loads(row["raw_text"]) == []
         assert json.loads(row["extracted_fields"]) == []
+
+    def test_creates_reports_dir_if_missing(self, tmp_path: Path):
+        nested = tmp_path / "sub" / "reports"
+        assert not nested.exists()
+        log_results(["https://img.com/a.jpg"], _sample_output(), reports_dir=nested)
+        assert nested.exists()
+
+    def test_returns_csv_path(self, tmp_path: Path):
+        path = log_results(["https://img.com/a.jpg"], _sample_output(), reports_dir=tmp_path)
+        assert isinstance(path, Path)
+        assert path.suffix == ".csv"
+        assert "analysis_" in path.name

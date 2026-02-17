@@ -112,10 +112,15 @@ Every run appends a row per image to a daily CSV file in `reports/`:
 reports/analysis_2025-06-15.csv
 ```
 
-| timestamp | image_url | risk_level | risk_score | recommendation | confidence | ai_detected | harmful_content | brand | objects_detected | raw_text | extracted_fields | image_quality | people_count | processing_time_ms | model_version |
-|-----------|-----------|------------|------------|----------------|------------|-------------|-----------------|-------|-----------------|----------|-----------------|--------------|--------------|-------------------|---------------|
+One row per image with every output field as a column:
 
-The `reports/` folder is gitignored — it's local-only output.
+**Run metadata:** timestamp, image_url, risk_level, risk_score, recommendation, confidence, ai_detected, processing_time_ms, model_version
+
+**Per-image Gemini fields:** primary_label, description, objects_detected, raw_text, extracted_fields, brand, detected_brands, image_quality, people_count, classification_labels, labels, contains_harmful_content, harmful_content_type, safety_score, on_running_related, on_running_confidence, on_running_details, is_product_image, is_athletic_content, dominant_colors, scene_type, image_category, product_category, product_gender, product_year, product_season, product_vertical, product_family, product_model, product_generation, product_primary_colour, product_secondary_colour, language_category, receipt_fields
+
+List/dict fields are JSON-serialized in the CSV cells.
+
+The `reports/` folder is gitignored — local-only output.
 
 ## Run tests
 

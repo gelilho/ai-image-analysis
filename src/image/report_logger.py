@@ -142,9 +142,19 @@ def log_results(
         row = {**shared, "image_url": url, **_extract_image_fields(img)}
         rows.append(row)
 
+    # Check if header matches current schema (columns may have been added)
+    needs_header = not file_exists or os.path.getsize(csv_path) == 0
+    if file_exists and os.path.getsize(csv_path) > 0:
+        with open(csv_path, newline="") as rf:
+            existing_header = next(csv.reader(rf), [])
+        if existing_header != COLUMNS:
+            needs_header = True
+            logger.warning("CSV schema changed — rewriting header (old data cleared)")
+            csv_path.unlink()
+
     with open(csv_path, "a", newline="") as f:
-        writer = csv.DictWriter(f, fieldnames=COLUMNS)
-        if not file_exists or os.path.getsize(csv_path) == 0:
+        writer = csv.DictWriter(f, fieldnames=COLUMNS, quoting=csv.QUOTE_ALL)
+        if needs_header:
             writer.writeheader()
         writer.writerows(rows)
 

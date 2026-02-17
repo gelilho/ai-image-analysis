@@ -162,3 +162,38 @@ class TestReportLogger:
         path = log_results(["https://img.com/a.jpg"], _sample_output(), reports_dir=tmp_path)
         assert isinstance(path, Path)
         assert path.name == CSV_FILENAME
+
+    def test_schema_change_rewrites_header(self, tmp_path: Path):
+        """If the CSV has a stale header, it gets replaced with the current schema."""
+        csv_path = tmp_path / CSV_FILENAME
+        # Write a CSV with an outdated header (missing associated_player)
+        old_header = [c for c in COLUMNS if c != "associated_player"]
+        with open(csv_path, "w", newline="") as f:
+            writer = csv.DictWriter(f, fieldnames=old_header)
+            writer.writeheader()
+
+        log_results(["https://img.com/a.jpg"], _sample_output(), reports_dir=tmp_path)
+
+        with open(csv_path) as f:
+            reader = csv.DictReader(f)
+            assert reader.fieldnames == COLUMNS
+            rows = list(reader)
+        assert len(rows) == 1
+        # All columns should be present and parseable
+        assert "associated_player" in rows[0]
+
+    def test_values_with_commas_properly_quoted(self, tmp_path: Path):
+        """Values containing commas must be quoted so CSV column count stays correct."""
+        url = "https://img.com/shoe.jpg"
+        output = _sample_output(url)
+        # Inject a value with a comma into associated_player
+        analyses = output["analysis_results"]["content_analysis"]["analysis_details"]["individual_analyses"]
+        analyses[0]["associated_player"] = "Vinicius Jr., Real Madrid"
+
+        log_results([url], output, reports_dir=tmp_path)
+
+        with open(tmp_path / CSV_FILENAME) as f:
+            reader = csv.reader(f)
+            header = next(reader)
+            row = next(reader)
+        assert len(row) == len(header), f"Row has {len(row)} cols, header has {len(header)}"

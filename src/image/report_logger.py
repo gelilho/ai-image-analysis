@@ -9,7 +9,8 @@ from typing import Any
 
 from loguru import logger
 
-REPORTS_DIR = Path("reports")
+_PROJECT_ROOT = Path(__file__).resolve().parents[2]
+REPORTS_DIR = _PROJECT_ROOT / "reports"
 CSV_FILENAME = "analysis_output.csv"
 
 COLUMNS = [

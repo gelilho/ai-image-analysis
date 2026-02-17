@@ -120,8 +120,6 @@ One row per image with every output field as a column:
 
 List/dict fields are JSON-serialized in the CSV cells.
 
-The `reports/` folder is gitignored — local-only output.
-
 ## Run tests
 
 ```bash

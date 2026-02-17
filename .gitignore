@@ -13,5 +13,4 @@ build/
 .mypy_cache/
 .ruff_cache/
 models/
-reports/
 uv.lock
